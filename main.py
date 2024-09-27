@@ -1,6 +1,9 @@
+from datetime import datetime
 import os
 import sqlite3
 import pandas
+
+# Cria as pastas caso não exista 
 
 root = "meu_sistema_livraria"
 data = "/data"
@@ -19,7 +22,9 @@ if not os.path.isdir(f"{root}{backup}"):
 if not os.path.isdir(f"{root}{data}"):
     os.makedirs(f"{root}{data}")
 
+# Conexao com o BD
 conexao = sqlite3.connect(f"{root}{data}/livraria.db")
+
 
 cursor = conexao.cursor()
 cursor.execute('''
@@ -67,8 +72,28 @@ def exportcsv():
     tabela.to_csv(f"{root}{export}/livros_exportados.csv", index=False, encoding="utf-8")
 
 
+def importarcsv():
+    path = input("Digite o caminho até o arquivo que queira importar: ")
+    import_csv = pandas.read_csv(path)
+
+    for i, row in import_csv.iterrows():
+        new_livro = (
+            row["titulo"],
+            row["autor"],
+            row["ano_publicado"],
+            row["preco"]
+        )
+
+        cursor.execute('''
+        INSERT INTO livros (titulo, autor, ano_publicado, preco) VALUES (?, ?, ?, ?)
+        ''', new_livro)
+
+
+
 def backupdb():
-    pass
+    bd_backup = sqlite3.connect(f"{root}{backup}/backup_livraria_{datetime.now().strftime('%Y-%m-%d')}.db")
+    conexao.backup(bd_backup)
+    bd_backup.close()
 
 
 while True:
@@ -93,6 +118,12 @@ while True:
 
         case 6:
             exportcsv()
+        
+        case 7:
+            importarcsv()
+        
+        case 8:
+            backupdb()
 
         case 9:
             break
