@@ -25,7 +25,6 @@ if not os.path.isdir(f"{root}{data}"):
 # Conexao com o BD
 conexao = sqlite3.connect(f"{root}{data}/livraria.db")
 
-
 cursor = conexao.cursor()
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS livros (
@@ -39,7 +38,6 @@ cursor.execute('''
 
 
 def adicionarlivro():
-
     new_livro = (
         input("Digite o titulo do livro: "),
         input("Digite o nome do autor do livro: "),
@@ -66,7 +64,6 @@ def listarlivros():
 
 
 def exportcsv():
-
     tabela = pandas.read_sql_query("SELECT * FROM livros", conexao)
 
     tabela.to_csv(f"{root}{export}/livros_exportados.csv", index=False, encoding="utf-8")
@@ -89,12 +86,39 @@ def importarcsv():
         ''', new_livro)
 
 
-
 def backupdb():
     bd_backup = sqlite3.connect(f"{root}{backup}/backup_livraria_{datetime.now().strftime('%Y-%m-%d')}.db")
     conexao.backup(bd_backup)
     bd_backup.close()
 
+def atualizarPreco():
+    livro_id = int(input("Digite o ID do livro que deseja atualizar: "))
+    novo_preco = float(input("Digite o novo preço do livro: "))
+
+    cursor.execute('''
+        UPDATE livros
+        SET preco = ?
+        WHERE id = ?
+    ''', (novo_preco, livro_id))
+
+
+def removerLivro():
+    livro_id = int(input("Digite o ID do livro que deseja remover: "))
+
+    cursor.execute('''
+        DELETE FROM livros WHERE id = ?
+    ''', (livro_id,))
+
+
+def buscarAutor():
+    autor = input("Digite o nome do autor: ")
+
+    resposta = pandas.read_sql_query("SELECT * FROM livros WHERE autor = ?", conexao, params=(autor,))
+
+    if resposta.empty:
+        print("Nenhum livro encontrado para esse autor.\n")
+    else:
+        print(resposta, "\n")
 
 while True:
     print("[1] Adicionar novo livro")
@@ -116,12 +140,21 @@ while True:
         case 2:
             listarlivros()
 
+        case 3:
+            atualizarPreco()
+
+        case 4:
+            removerLivro()
+
+        case 5:
+            buscarAutor()
+
         case 6:
             exportcsv()
-        
+
         case 7:
             importarcsv()
-        
+
         case 8:
             backupdb()
 
